@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+studydeck.db
+upload/studydeck.db
+upload/.venv/
+upload/.pytest_cache/
+upload/.pytest-tmp/
+*.log

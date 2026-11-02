@@ -1,0 +1,6 @@
+body { font-family: system-ui, sans-serif; background: #f4f6f8; color: #20252b; margin: 0; }
+main { max-width: 680px; margin: 2rem auto; padding: 1.5rem; background: white; border-radius: 12px; }
+input, button { padding: .55rem; margin: .2rem; } button { cursor: pointer; }
+section { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #ddd; }
+li { margin: .6rem 0; } li form { display: inline; } .done { text-decoration: line-through; color: #777; }
+.message { color: #b42318; }

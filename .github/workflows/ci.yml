@@ -73,24 +73,40 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Pull published image
-        shell: pwsh
-        run: docker pull bokyung811/studydeck:${{ github.sha }}
+        shell: powershell
+        run: |
+          docker pull bokyung811/studydeck:${{ github.sha }}
+          if ($LASTEXITCODE -ne 0) {
+            throw "docker pull failed with exit code $LASTEXITCODE"
+          }
       - name: Replace running container
-        shell: pwsh
+        shell: powershell
         run: |
           $existing = docker ps -a --filter "name=^studydeck$" --format "{{.Names}}"
+          if ($LASTEXITCODE -ne 0) {
+            throw "docker ps failed with exit code $LASTEXITCODE"
+          }
           if ($existing -eq "studydeck") {
             docker rm --force studydeck | Out-Host
+            if ($LASTEXITCODE -ne 0) {
+              throw "docker rm failed with exit code $LASTEXITCODE"
+            }
           }
           docker volume create studydeck-data | Out-Host
+          if ($LASTEXITCODE -ne 0) {
+            throw "docker volume create failed with exit code $LASTEXITCODE"
+          }
           docker run --detach `
             --name studydeck `
             --publish 8080:8080 `
             --restart unless-stopped `
             --volume studydeck-data:/app/data `
             bokyung811/studydeck:${{ github.sha }}
+          if ($LASTEXITCODE -ne 0) {
+            throw "docker run failed with exit code $LASTEXITCODE"
+          }
       - name: Verify deployed container
-        shell: pwsh
+        shell: powershell
         run: |
           $ready = $false
           for ($attempt = 1; $attempt -le 30; $attempt++) {
@@ -113,5 +129,6 @@ jobs:
           }
       - name: Show logs on deployment failure
         if: failure()
-        shell: pwsh
-        run: docker logs studydeck
+        shell: powershell
+        run: |
+          docker logs studydeck

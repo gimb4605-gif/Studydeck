@@ -7,3 +7,9 @@ upload/.venv/
 upload/.pytest_cache/
 upload/.pytest-tmp/
 *.log
+actions-runner/
+_work/
+_diag/
+.runner
+.credentials
+.credentials_*

@@ -62,3 +62,56 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/studydeck:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: publish
+    runs-on: self-hosted
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull published image
+        shell: pwsh
+        run: docker pull bokyung811/studydeck:${{ github.sha }}
+      - name: Replace running container
+        shell: pwsh
+        run: |
+          $existing = docker ps -a --filter "name=^studydeck$" --format "{{.Names}}"
+          if ($existing -eq "studydeck") {
+            docker rm --force studydeck | Out-Host
+          }
+          docker volume create studydeck-data | Out-Host
+          docker run --detach `
+            --name studydeck `
+            --publish 8080:8080 `
+            --restart unless-stopped `
+            --volume studydeck-data:/app/data `
+            bokyung811/studydeck:${{ github.sha }}
+      - name: Verify deployed container
+        shell: pwsh
+        run: |
+          $ready = $false
+          for ($attempt = 1; $attempt -le 30; $attempt++) {
+            try {
+              $response = Invoke-WebRequest -Uri "http://localhost:8080/" -UseBasicParsing -TimeoutSec 3
+              if ($response.StatusCode -eq 200) {
+                $nicknameResponse = Invoke-WebRequest -Uri "http://localhost:8080/?nickname=deploy" -UseBasicParsing -TimeoutSec 3
+                if ($nicknameResponse.StatusCode -eq 200) {
+                  $ready = $true
+                  break
+                }
+              }
+            } catch {
+              Start-Sleep -Seconds 1
+            }
+          }
+          if (-not $ready) {
+            docker logs studydeck
+            throw "StudyDeck container did not become ready."
+          }
+      - name: Show logs on deployment failure
+        if: failure()
+        shell: pwsh
+        run: docker logs studydeck

@@ -2,12 +2,13 @@ from datetime import date
 from pathlib import Path
 import sqlite3
 from urllib.parse import quote
+import os
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR.parent / "studydeck.db"
+DB_PATH = Path(os.environ.get("STUDYDECK_DB_PATH", BASE_DIR.parent / "studydeck.db"))
 app = FastAPI(title="Study Deck")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
